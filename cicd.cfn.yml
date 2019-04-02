@@ -38,6 +38,16 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub ${AWS::StackName}-codebuild-docker-image
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - Sid: all-read-access
+            Effect: Allow
+            Principal: '*'
+            Action:
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
     DeletionPolicy: Retain
 
   CodePipelineArtifactBucket:
