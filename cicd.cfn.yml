@@ -37,7 +37,7 @@ Resources:
   EcrDockerRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub ${AWS::StackName}-codebuild-base-image
+      RepositoryName: !Sub ${AWS::StackName}-codebuild
     DeletionPolicy: Retain
 
   CodePipelineArtifactBucket:
