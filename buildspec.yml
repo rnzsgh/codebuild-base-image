@@ -1,0 +1,16 @@
+---
+version: 0.2
+phases:
+  pre_build:
+      commands:
+      - $(aws ecr get-login --no-include-email)
+      - TAG="v1-04-02-2019"
+  build:
+    commands:
+      - docker build --tag $REPOSITORY_URI:$TAG .
+  post_build:
+    commands:
+      - docker push $REPOSITORY_URI:$TAG
+      - printf '[{"name":"${ImageName}","imageUri":"%s"}]' $REPOSITORY_URI:$TAG > images.json
+artifacts:
+  files: images.json
