@@ -37,14 +37,21 @@ Resources:
   EcrDockerRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub ${AWS::StackName}-codebuild
+      RepositoryName: !Sub ${AWS::StackName}-codebuild-docker-image
     DeletionPolicy: Retain
 
   CodePipelineArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${AWS::StackName}-codepipline-artifact
-    DeletionPolicy: Retain
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -62,7 +69,7 @@ Resources:
             Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrDockerRepository}
           - Name: ACCOUNT_ID
             Value: !Ref AWS::AccountId
-      Name: !Sub ${AWS::StackName}-codebuild-base-image
+      Name: !Sub ${AWS::StackName}-codebuild-docker-image
       ServiceRole: !Ref CodeBuildServiceRole
       LogsConfig:
         CloudWatchLogs:
@@ -72,7 +79,7 @@ Resources:
   LogGroupBuild:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /core/${AWS::StackName}/build-base-image
+      LogGroupName: !Sub /build/${AWS::StackName}-codebuild-docker-image
 
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
@@ -120,12 +127,14 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
+              - Resource: !GetAtt LogGroupBuild
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
               - Resource: "*"
                 Effect: Allow
                 Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
                   - ecr:GetAuthorizationToken
               - Resource: !Sub arn:aws:s3:::${CodePipelineArtifactBucket}/*
                 Effect: Allow
@@ -148,6 +157,7 @@ Resources:
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
+      Name: !Sub ${AWS::StackName}-codebuild-docker-image
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
         Type: S3
