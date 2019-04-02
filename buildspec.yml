@@ -4,7 +4,7 @@ phases:
   pre_build:
       commands:
       - $(aws ecr get-login --no-include-email)
-      - TAG="v1-04-02-2019"
+      - TAG=v1-04-02-2019
   build:
     commands:
       - docker build --tag $REPOSITORY_URI:$TAG .
